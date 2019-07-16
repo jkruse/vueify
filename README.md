@@ -38,7 +38,7 @@ You can also mix preprocessor languages in the component file:
   color #f00
 </style>
 
-<template lang="jade">
+<template lang="pug">
 h1(class="red") {{msg}}
 </template>
 
@@ -144,7 +144,6 @@ These are the preprocessors supported by vueify out of the box:
 - stylus
 - less
 - scss (via `node-sass`, use `sass` in [config section](#configuring-options))
-- jade
 - pug
 - coffee-script (use `coffee` in [config section](#configuring-options))
 

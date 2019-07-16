@@ -12,6 +12,8 @@ const vueCompiler = require('vue-template-compiler')
 const transpile = require('vue-template-es2015-compiler')
 const genId = require('../lib/gen-id')
 
+const { JSDOM } = jsdom;
+
 const tempDir = path.resolve(__dirname, './temp')
 const mockEntry = path.resolve(tempDir, 'entry.js')
 rimraf.sync(tempDir)
@@ -24,15 +26,14 @@ function test (file, assert) {
       .transform(vueify)
       .bundle((err, buf) => {
         if (err) return done(err)
-        jsdom.env({
-          html: '<!DOCTYPE html><html><head></head><body></body></html>',
-          src: [buf.toString()],
-          done: (err, window) => {
-            if (err) return done(err)
-            assert(window)
-            done()
-          }
-        })
+        const dom = new JSDOM('<!DOCTYPE html><html><head></head><body></body></html>', { runScripts: 'outside-only' })
+        try {
+          dom.window.eval(buf.toString())
+        } catch (e) {
+          return done(e)
+        }
+        assert(dom.window)
+        done()
       })
   })
 }
@@ -51,7 +52,7 @@ function testCssExtract (file, assert) {
 
 function assertRenderFn (options, template) {
   const compiled = vueCompiler.compile(template)
-  expect(options.render.toString()).to.equal(transpile('function render() {' + compiled.render + '}'))
+  expect(options.render.toString()).to.equal(transpile('function render () {' + compiled.render + '}'))
 }
 
 describe('vueify', () => {
@@ -60,7 +61,7 @@ describe('vueify', () => {
     assertRenderFn(module, '<h2 class="red">{{msg}}</h2>')
     expect(module.data().msg).to.contain('Hello from Component A!')
     const style = window.document.querySelector('style').textContent
-    expect(style).to.contain('comp-a h2 {\n  color: #f00;\n}')
+    expect(style).to.contain('comp-a h2 {\r\n  color: #f00;\r\n}')
   })
 
   test('pre-processors', window => {
@@ -106,9 +107,9 @@ describe('vueify', () => {
       '</div>'
     )
     var style = window.document.querySelector('style').textContent
-    expect(style).to.contain('.test[' + id + '] {\n  color: yellow;\n}')
-    expect(style).to.contain('.test[' + id + ']:after {\n  content: \'bye!\';\n}')
-    expect(style).to.contain('h1[' + id + '] {\n  color: green;\n}')
+    expect(style).to.contain('.test[' + id + '] {\r\n  color: yellow;\r\n}')
+    expect(style).to.contain('.test[' + id + ']:after {\r\n  content: \'bye!\';\r\n}')
+    expect(style).to.contain('h1[' + id + '] {\r\n  color: green;\r\n}')
   })
 
   test('style-import', window => {
@@ -132,7 +133,7 @@ describe('vueify', () => {
   test('media-query', window => {
     var style = window.document.querySelector('style').textContent
     var id = 'data-v-' + genId(require.resolve('./fixtures/media-query.vue'))
-    expect(style).to.contain('@media print {\n  .foo[' + id + '] {\n    color: #000;\n  }\n}')
+    expect(style).to.contain('@media print {\r\n  .foo[' + id + '] {\r\n    color: #000;\r\n  }\r\n}')
   })
 
   testCssExtract('style-export', css => {
