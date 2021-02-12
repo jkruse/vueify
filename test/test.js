@@ -12,7 +12,7 @@ const vueCompiler = require('vue-template-compiler')
 const transpile = require('vue-template-es2015-compiler')
 const genId = require('../lib/gen-id')
 
-const { JSDOM } = jsdom;
+const { JSDOM } = jsdom
 
 const tempDir = path.resolve(__dirname, './temp')
 const mockEntry = path.resolve(tempDir, 'entry.js')
